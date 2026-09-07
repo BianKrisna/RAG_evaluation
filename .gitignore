@@ -1,0 +1,5 @@
+__pycache__
+my_vector_db
+venv
+.env
+test.ipynb
