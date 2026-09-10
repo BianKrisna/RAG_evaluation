@@ -110,7 +110,7 @@ if __name__ == "__main__":
     print("Chain OK, answer snippet:", str(test.get("answer", ""))[:80])
 
     print("Creating/checking LangSmith dataset...")
-    create_or_get_dataset(DATASET_NAME, EVAL_EXAMPLES)
+    create_or_get_dataset(DATASET_NAME, EVAL_EXAMPLES, overwrite=True)
 
     print("Running evaluation (this calls LangSmith + judge LLM)...")
     results = evaluate_rag(

@@ -9,8 +9,8 @@ Scoring: 0-3 scale (normalized to 0.0-1.0 for LangSmith)
     2 = mostly correct / relevant with minor issues
     3 = fully correct / highly relevant / well-grounded
 
-Judge LLM: meta-llama/Llama-3.1-8B-Instruct via HuggingFace Inference API.
-Override with JUDGE_MODEL env var. Uses HF_API key.
+Judge LLM: llama-3.1-8b-instant via Groq (free tier).
+Override model with JUDGE_MODEL env var. Uses GROQ_API_KEY.
 
 Metrics:
     correctness         -- does answer match the reference? (needs ground truth)
@@ -24,7 +24,8 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_groq import ChatGroq
+from langchain_core.utils import convert_to_secret_str
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
@@ -35,18 +36,16 @@ from langchain_core.output_parsers import StrOutputParser
 
 @lru_cache(maxsize=1)
 def _judge():
-    hf_token = os.getenv("HF_API")
-    if not hf_token:
-        raise RuntimeError("HF_API missing from .env")
-    model = os.getenv("JUDGE_MODEL", "meta-llama/Llama-3.1-8B-Instruct")
-    endpoint = HuggingFaceEndpoint(
-        huggingfacehub_api_token=hf_token,
-        repo_id=model,
+    groq_key = os.getenv("GROQ_API_KEY")
+    if not groq_key:
+        raise RuntimeError("GROQ_API_KEY missing from .env — get one free at console.groq.com")
+    model = os.getenv("JUDGE_MODEL", "qwen/qwen3.8-27b")
+    return ChatGroq(
+        api_key=convert_to_secret_str(groq_key),
+        model=model,
         temperature=0.1,
-        task="text-generation",
-        max_new_tokens=128,   # short — only needs "Score: N\nReason: ..."
+        max_tokens=128,   # short — only needs "Score: N\nReason: ..."
     )
-    return ChatHuggingFace(llm=endpoint)
 
 
 # ---------------------------------------------------------------------------
