@@ -60,6 +60,6 @@ question_answer_chain = create_stuff_documents_chain(llm, prompt)
 retriever = vectorstore.as_retriever()
 rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
-question = "What is this document about?"
+question = input("What is your question?")
 response = rag_chain.invoke({"input": question})
 print(response["answer"])
