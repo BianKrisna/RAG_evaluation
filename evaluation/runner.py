@@ -67,6 +67,7 @@ def evaluate_rag(
     evaluators: list[Callable] | None = None,
     client: Client | None = None,
     max_concurrency: int = 1,
+    data=None,
     **kwargs: Any,
 ):
     """
@@ -79,6 +80,7 @@ def evaluate_rag(
         evaluators:        List of evaluator functions. Defaults to ALL_EVALUATORS.
         client:            LangSmith Client (auto-created from env if None).
         max_concurrency:   Parallel eval calls.
+        data:              Optional shared dataset snapshot; otherwise uses dataset_name.
         **kwargs:          Extra args forwarded to langsmith.evaluate().
 
     Returns:
@@ -91,7 +93,7 @@ def evaluate_rag(
 
     results = evaluate(
         _make_target(rag_chain),
-        data=dataset_name,
+        data=dataset_name if data is None else data,
         evaluators=evaluators,
         experiment_prefix=experiment_prefix,
         client=client,
