@@ -1,5 +1,42 @@
-__pycache__
-my_vector_db
-venv
+# Secrets and local environment settings
 .env
-test.ipynb
+.env.*
+!.env.example
+!.env.sample
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+
+# Test coverage output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Generated local vector database
+/my_vector_db/
+
+# Notebook checkpoints and existing scratch notebook
+.ipynb_checkpoints/
+/test.ipynb
+
+# Logs and macOS metadata
+*.log
+.DS_Store
+._*
