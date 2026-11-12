@@ -2,6 +2,7 @@
 
     python eval_rag.py --architectures baseline
     python eval_rag.py --architectures baseline hybrid
+    python eval_rag.py --architectures baseline hybrid reranked
 
 Requires HF_API, LANGSMITH_API_KEY and GROQ_API_KEY; JUDGE_MODEL is optional.
 """
