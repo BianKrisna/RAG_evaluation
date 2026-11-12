@@ -4,7 +4,10 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from pydantic import Field
-from typing import List
+from typing import Any, List
+
+CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L6-v2"
+
 
 class HybridRetriever(BaseRetriever):
     """Combines a dense (FAISS) and sparse (BM25) retriever via RRF."""
@@ -57,3 +60,35 @@ def sparse_retrieval(documents, k=4):
     retriever = BM25Retriever.from_documents(documents)
     retriever.k = k
     return retriever
+
+class RerankingRetriever(BaseRetriever):
+    """Reranks retrieved candidates by query-document cross-encoder score."""
+
+    retriever: BaseRetriever = Field(description="Candidate retriever")
+    model: Any = Field(description="Cross-encoder model", exclude=True)
+    top_k: int = Field(default=4, gt=0, description="Number of final docs to return")
+
+    def _get_relevant_documents(
+        self,
+        query: str,
+        *,
+        run_manager: CallbackManagerForRetrieverRun,
+    ) -> List[Document]:
+        documents = self.retriever.invoke(
+            query, config={"callbacks": run_manager.get_child()}
+        )
+        if not documents:
+            return []
+
+        pairs = [(query, doc.page_content) for doc in documents]
+        scores = self.model.predict(pairs)
+        ranked = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)
+        return [doc for doc, _ in ranked[: self.top_k]]
+
+
+def cross_encoder(retriever, model=None, top_k=4):
+    """Wrap a candidate retriever; optionally inject a loaded scoring model."""
+    if model is None or isinstance(model, str):
+        from sentence_transformers import CrossEncoder
+        model = CrossEncoder(model if model is not None else CROSS_ENCODER_MODEL)
+    return RerankingRetriever(retriever=retriever, model=model, top_k=top_k)
