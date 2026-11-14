@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from pydantic import Field
 from typing import Any, List
+from .evidence import prepare_evidence
 
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L6-v2"
 
@@ -29,14 +30,12 @@ class HybridRetriever(BaseRetriever):
         dense_docs = self.dense.invoke(query)
         sparse_docs = self.sparse.invoke(query)
 
-        # Build a map: doc page_content → (Document, fused_score).
-        # page_content used as dedup key (same chunk from both retrievers).
+        # The same chunk from both retrievers fuses; other sources/pages stay distinct.
         scores: dict[str, tuple[Document, float]] = {}
 
         def apply_rrf(docs: List[Document], weight: float) -> None:
-            for rank, doc in enumerate(docs, start=1):
-                # how rrf works
-                key = doc.page_content
+            for rank, doc in enumerate(prepare_evidence(docs), start=1):
+                key = doc.metadata["chunk_id"]
                 rrf_score = weight / (rank + self.rrf_k)
                 if key in scores:
                     scores[key] = (scores[key][0], scores[key][1] + rrf_score)

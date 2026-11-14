@@ -16,6 +16,8 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from langsmith import evaluate, Client
+from langchain_core.documents import Document
+from rag.evidence import evidence_record, format_evidence
 
 
 def summarize_evaluations(results) -> dict[str, dict[str, int]]:
@@ -46,15 +48,16 @@ def _make_target(rag_chain) -> Callable:
 
     The output dict MUST contain:
         "answer"  (str) — the generated answer
-        "context" (str) — retrieved docs joined as text (for groundedness /
-                          retrieval_relevance metrics). If your chain doesn't
-                          expose context, pass context_key=None and those two
-                          metrics will receive an empty string.
+        "context" (str) — retrieved docs with source/ID/page headers (for the judges).
+        "source_documents" retains structured evidence, and citation fields are
+        forwarded when present. Chains without context receive an empty string.
     """
 
     def target(inputs: dict) -> dict:
         question = inputs["question"]
         raw = rag_chain.invoke({"input": question})
+        source_records = []
+        citation_fields = {}
 
         # Handle dict output (create_retrieval_chain style)
         if isinstance(raw, dict):
@@ -63,17 +66,22 @@ def _make_target(rag_chain) -> Callable:
             source_docs = raw.get("context", [])
             if isinstance(source_docs, list):
                 context = "\n\n".join(
-                    doc.page_content if hasattr(doc, "page_content") else str(doc)
+                    format_evidence(doc) if isinstance(doc, Document) else str(doc)
                     for doc in source_docs
                 )
+                source_records = [evidence_record(doc) for doc in source_docs
+                                  if isinstance(doc, Document)]
             else:
                 context = str(source_docs)
+            citation_fields = {key: raw[key] for key in ("citations", "citation_validation")
+                               if key in raw}
         # Handle plain-string output (LCEL pipe chains)
         else:
             answer = str(raw)
             context = ""
 
-        return {"answer": answer, "context": context}
+        return {"answer": answer, "context": context,
+                "source_documents": source_records, **citation_fields}
 
     return target
 

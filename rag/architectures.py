@@ -1,6 +1,7 @@
 """Named presets composed from ordinary LangChain Runnables."""
 from operator import itemgetter
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from .evidence import prepare_evidence, resolve_citations
 from .generation import build_generation
 from .retrieval import (
     CROSS_ENCODER_MODEL, HybridRetriever, cross_encoder, dense_retrieval, sparse_retrieval,
@@ -8,10 +9,16 @@ from .retrieval import (
 
 
 def assemble(retrieval, generation):
-    """retrieval: str -> documents; generation: dict -> answer."""
-    return RunnablePassthrough.assign(
-        context=itemgetter("input") | retrieval.with_config(run_name="retrieve_documents")
-    ).assign(answer=generation).with_config(run_name="retrieval_chain")
+    """Compose retrieval/generation and return text, evidence, and citation validation."""
+    return (
+        RunnablePassthrough.assign(
+            context=itemgetter("input") | retrieval.with_config(run_name="retrieve_documents")
+            | RunnableLambda(prepare_evidence)
+        ).assign(answer=generation)
+        | RunnableLambda(lambda result: {
+            **result, **resolve_citations(result["answer"], result["context"]),
+        })
+    ).with_config(run_name="retrieval_chain")
 
 
 def baseline(resources, llm=None, prompt=None):
