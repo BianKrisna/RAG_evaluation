@@ -18,6 +18,24 @@ from typing import Any, Callable
 from langsmith import evaluate, Client
 
 
+def summarize_evaluations(results) -> dict[str, dict[str, int]]:
+    """Count scored/failed examples per metric from the explicit error flags.
+
+    Counts describe evaluation coverage, not answer accuracy. A valid zero grade
+    is scored successfully; a null quality score is an evaluation error.
+    """
+    from .evaluators import ERROR_SUFFIX
+
+    summary = {}
+    for row in results:
+        for feedback in row["evaluation_results"]["results"]:
+            if feedback.key.endswith(ERROR_SUFFIX):
+                metric = feedback.key[:-len(ERROR_SUFFIX)]
+                counts = summary.setdefault(metric, {"scored": 0, "errors": 0})
+                counts["errors" if feedback.score == 1 else "scored"] += 1
+    return summary
+
+
 def _make_target(rag_chain) -> Callable:
     """
     Wrap a RAG chain into the target function signature that LangSmith expects:

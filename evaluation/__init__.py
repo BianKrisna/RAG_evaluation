@@ -6,7 +6,7 @@ from .evaluators import (
     retrieval_relevance_evaluator,
     ALL_EVALUATORS,
 )
-from .runner import evaluate_rag
+from .runner import evaluate_rag, summarize_evaluations
 from .dataset import create_or_get_dataset
 
 __all__ = [
@@ -16,5 +16,6 @@ __all__ = [
     "retrieval_relevance_evaluator",
     "ALL_EVALUATORS",
     "evaluate_rag",
+    "summarize_evaluations",
     "create_or_get_dataset",
 ]
