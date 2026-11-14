@@ -24,7 +24,7 @@ def main(argv=None):
     from langsmith import Client
     from rag import ARCHITECTURES, prepare_resources
     from rag.architectures import ARCHITECTURE_SETTINGS
-    from evaluation import create_or_get_dataset
+    from evaluation import create_or_get_dataset, summarize_evaluations
     from evaluation.examples import EVAL_EXAMPLES, DATASET_NAME
     from evaluation.comparison import compare_architectures
 
@@ -45,6 +45,10 @@ def main(argv=None):
     for name, result in results.items():
         experiment = client.read_project(project_name=result.experiment_name)
         print(f"{name}: {experiment.url}")
+        for metric, counts in summarize_evaluations(result).items():
+            attempted = counts["scored"] + counts["errors"]
+            print(f"  {metric}: {counts['scored']}/{attempted} scored, "
+                  f"{counts['errors']} evaluation errors")
 
 
 if __name__ == "__main__":
