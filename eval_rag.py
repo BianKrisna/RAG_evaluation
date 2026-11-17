@@ -30,10 +30,11 @@ def main(argv=None):
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--architectures", nargs="+", choices=ARCHITECTURES, default=["baseline", "hybrid"])
-    parser.add_argument("--dataset", default=DATASET_NAME)
+    parser.add_argument("--dataset", default=DATASET_NAME,
+                        help="base dataset name; a fingerprint of the examples is appended")
     args = parser.parse_args(argv)
     client = Client()
-    create_or_get_dataset(args.dataset, EVAL_EXAMPLES, client=client)
+    dataset_name = create_or_get_dataset(args.dataset, EVAL_EXAMPLES, client=client)
     resources = prepare_resources()
     chains = {name: ARCHITECTURES[name](resources) for name in args.architectures}
     common = {"chunk_size": 1024, "chunk_overlap": 100,
@@ -41,7 +42,7 @@ def main(argv=None):
               "model": "meta-llama/Llama-3.1-8B-Instruct", "temperature": 0.1,
               "max_new_tokens": 512}
     settings = {name: {**common, **ARCHITECTURE_SETTINGS.get(name, {})} for name in chains}
-    results = compare_architectures(chains, args.dataset, settings=settings, client=client)
+    results = compare_architectures(chains, dataset_name, settings=settings, client=client)
     for name, result in results.items():
         experiment = client.read_project(project_name=result.experiment_name)
         print(f"{name}: {experiment.url}")
