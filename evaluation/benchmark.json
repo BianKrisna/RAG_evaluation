@@ -1,0 +1,675 @@
+{
+  "name": "RAG-eval",
+  "description": "Benchmark for the RAG pipeline over base_docs_comnet.pdf. Edit this file to change the dataset; the fingerprint in the LangSmith dataset name changes automatically.",
+  "corpus": {
+    "source": "base_docs_comnet.pdf",
+    "pages": 717,
+    "page_indexing": "0-based page index, same as the 'page' metadata set by PyMuPDFLoader"
+  },
+  "types": {
+    "factual": "one clear fact stated in one place",
+    "keyword": "answer is an exact number or identifier; sparse (BM25) retrieval should do well",
+    "paraphrase": "question avoids the document's own terms; dense retrieval should do well",
+    "multi_chunk": "answer needs two different places in the document",
+    "unanswerable": "topic is not in the document; the correct behaviour is to say it does not know"
+  },
+  "examples": [
+    {
+      "id": "f01",
+      "type": "factual",
+      "question": "What does store-and-forward transmission mean for a packet switch?",
+      "answer": "The packet switch must receive the entire packet before it can start sending the first bit of that packet onto the outgoing link.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 43,
+          "phrase": "store-and-forward transmission means"
+        }
+      ]
+    },
+    {
+      "id": "f02",
+      "type": "factual",
+      "question": "What are the four main types of delay a packet experiences at each node along its path?",
+      "answer": "Nodal processing delay, queuing delay, transmission delay and propagation delay. Together they add up to the total nodal delay.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 55,
+          "phrase": "total nodal delay"
+        }
+      ]
+    },
+    {
+      "id": "f03",
+      "type": "factual",
+      "question": "What happens to the queue at a router when the traffic intensity is greater than 1?",
+      "answer": "Bits arrive faster than they can be transmitted, so the queue grows without bound and the queuing delay approaches infinity. Systems should be designed so that traffic intensity is no greater than 1.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 59,
+          "phrase": "traffic intensity"
+        }
+      ]
+    },
+    {
+      "id": "f04",
+      "type": "factual",
+      "question": "Which five layers make up the Internet protocol stack?",
+      "answer": "The physical, link, network, transport and application layers.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 69,
+          "phrase": "consists of five layers"
+        }
+      ]
+    },
+    {
+      "id": "f05",
+      "type": "factual",
+      "question": "What are the three classes of DNS servers in the DNS hierarchy?",
+      "answer": "Root DNS servers, top-level domain (TLD) DNS servers and authoritative DNS servers.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 138,
+          "phrase": "three classes of dns servers"
+        }
+      ]
+    },
+    {
+      "id": "f06",
+      "type": "factual",
+      "question": "What is a conditional GET in HTTP and which header line does it use?",
+      "answer": "It is a normal HTTP GET request that also carries an If-Modified-Since header line. The server sends the full object only if it changed since that time; otherwise it tells the browser that its cached copy is still current.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 121,
+          "phrase": "conditional get message"
+        }
+      ]
+    },
+    {
+      "id": "f07",
+      "type": "factual",
+      "question": "What are the three major components of the classic TCP congestion-control algorithm?",
+      "answer": "Slow start, congestion avoidance and fast recovery. Slow start and congestion avoidance are mandatory.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 253,
+          "phrase": "three major components"
+        }
+      ]
+    },
+    {
+      "id": "f08",
+      "type": "factual",
+      "question": "What event triggers TCP fast retransmit?",
+      "answer": "Receiving three duplicate ACKs for a segment. TCP then retransmits the following segment before its timer expires.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 228,
+          "phrase": "three duplicate acks"
+        }
+      ]
+    },
+    {
+      "id": "f09",
+      "type": "factual",
+      "question": "What does a router do when a destination address matches more than one entry in its forwarding table?",
+      "answer": "It applies the longest prefix matching rule: it picks the longest matching entry and forwards the packet to the link interface of that entry.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 297,
+          "phrase": "longest prefix matching rule"
+        }
+      ]
+    },
+    {
+      "id": "f10",
+      "type": "factual",
+      "question": "What is head-of-the-line (HOL) blocking in an input-queued switch?",
+      "answer": "A packet waiting in an input queue cannot move through the switching fabric, even though its output port is free, because another packet at the front of the same queue is blocked.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 302,
+          "phrase": "head-of-the-line (hol) blocking"
+        }
+      ]
+    },
+    {
+      "id": "f11",
+      "type": "factual",
+      "question": "How does poisoned reverse work in distance-vector routing?",
+      "answer": "If node z routes through neighbour y to reach destination x, z tells y that its distance to x is infinity. Then y never tries to reach x through z, which avoids the routing loop.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 366,
+          "phrase": "poisoned reverse"
+        }
+      ]
+    },
+    {
+      "id": "f12",
+      "type": "factual",
+      "question": "What is an autonomous system (AS)?",
+      "answer": "A group of routers that are under the same administrative control.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 368,
+          "phrase": "autonomous systems"
+        }
+      ]
+    },
+    {
+      "id": "f13",
+      "type": "factual",
+      "question": "What is a nonce and why is it used in authentication?",
+      "answer": "A nonce is a number that a protocol uses only once in a lifetime. The verifier sends a nonce and the other side returns it encrypted, which shows that the other side is live and the messages are not a recorded playback.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 609,
+          "phrase": "a nonce is a number"
+        }
+      ]
+    },
+    {
+      "id": "f14",
+      "type": "factual",
+      "question": "Into which three categories can firewalls be classified?",
+      "answer": "Traditional packet filters, stateful filters and application gateways.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 638,
+          "phrase": "firewalls can be classified in three categories"
+        }
+      ]
+    },
+    {
+      "id": "f15",
+      "type": "factual",
+      "question": "What is handover (handoff) in a mobile network?",
+      "answer": "The process in which a moving wireless device changes the base station it is associated with, and so changes its point of attachment to the larger network.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 492,
+          "phrase": "handoff or handover"
+        }
+      ]
+    },
+    {
+      "id": "f16",
+      "type": "factual",
+      "question": "What is the job of a certification authority (CA)?",
+      "answer": "A CA binds a public key to a particular entity. It verifies that the entity is who it says it is and then issues a certificate for it.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 604,
+          "phrase": "certification authority (ca)"
+        }
+      ]
+    },
+    {
+      "id": "k01",
+      "type": "keyword",
+      "question": "Which port does an SMTP client connect to on the receiving mail server?",
+      "answer": "Port 25, over TCP.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 131,
+          "phrase": "connection to port 25"
+        }
+      ]
+    },
+    {
+      "id": "k02",
+      "type": "keyword",
+      "question": "Which transport protocol and port number does DNS use?",
+      "answer": "DNS runs over UDP and uses port 53.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 135,
+          "phrase": "uses port 53"
+        }
+      ]
+    },
+    {
+      "id": "k03",
+      "type": "keyword",
+      "question": "How many bits long is the TCP receive window field and what is it used for?",
+      "answer": "It is a 16-bit field used for flow control. It tells the sender how many bytes the receiver is willing to accept.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 222,
+          "phrase": "16-bit receive window field"
+        }
+      ]
+    },
+    {
+      "id": "k04",
+      "type": "keyword",
+      "question": "Which RFC standardizes the classic TCP congestion-control algorithm?",
+      "answer": "RFC 5681.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 253,
+          "phrase": "rfc 5681"
+        }
+      ]
+    },
+    {
+      "id": "k05",
+      "type": "keyword",
+      "question": "Which RFC standardized the Mobile IP architecture and protocols?",
+      "answer": "RFC 5944.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 558,
+          "phrase": "rfc 5944"
+        }
+      ]
+    },
+    {
+      "id": "k06",
+      "type": "keyword",
+      "question": "To which UDP port does a client send its DHCP discover message?",
+      "answer": "UDP port 67.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 321,
+          "phrase": "port 67"
+        }
+      ]
+    },
+    {
+      "id": "k07",
+      "type": "keyword",
+      "question": "How many bytes of header overhead do a TCP segment and a UDP segment have?",
+      "answer": "A TCP segment has 20 bytes of header overhead and a UDP segment has only 8 bytes.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 195,
+          "phrase": "20 bytes of header overhead"
+        }
+      ]
+    },
+    {
+      "id": "k08",
+      "type": "keyword",
+      "question": "Which port number identifies a web server process?",
+      "answer": "Port number 80.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 103,
+          "phrase": "port number 80"
+        }
+      ]
+    },
+    {
+      "id": "p01",
+      "type": "paraphrase",
+      "question": "Two Wi-Fi stations are out of range of each other, but both send to the same access point. What goes wrong?",
+      "answer": "This is the hidden terminal problem. One transmitter cannot hear the other one, so both may send at the same time to the same destination and their frames collide there.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 514,
+          "phrase": "hidden terminal problem"
+        }
+      ]
+    },
+    {
+      "id": "p02",
+      "type": "paraphrase",
+      "question": "After several failed attempts caused by stations sending at the same moment on Ethernet, how does a station choose how long to wait before retrying?",
+      "answer": "It uses binary exponential backoff. After n collisions it picks a random value K from 0 to 2^n - 1, so the more collisions a frame has had, the larger the range the wait is chosen from.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 433,
+          "phrase": "binary exponential backoff"
+        }
+      ]
+    },
+    {
+      "id": "p03",
+      "type": "paraphrase",
+      "question": "How can a home router let many devices with private addresses share one public IP address?",
+      "answer": "The router performs network address translation. It keeps a NAT translation table whose entries hold port numbers as well as IP addresses, rewrites the source address and port of outgoing datagrams, and uses the table to send replies back to the right internal host.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 324,
+          "phrase": "nat translation table"
+        }
+      ]
+    },
+    {
+      "id": "p04",
+      "type": "paraphrase",
+      "question": "The Web's protocol keeps no memory of earlier requests. How can a site still recognise a returning visitor?",
+      "answer": "With cookies. Cookie technology has four parts: a cookie header line in the HTTP response, a cookie header line in the HTTP request, a cookie file kept by the user's browser, and a back-end database at the web site.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 118,
+          "phrase": "cookie technology has four components"
+        }
+      ]
+    },
+    {
+      "id": "p05",
+      "type": "paraphrase",
+      "question": "How does TCP stop a fast sender from overflowing the buffer of a slowly reading application on the other side?",
+      "answer": "TCP provides flow control, a speed-matching service. The sender keeps a receive window variable that tells it how much free buffer space the receiver has, and it limits how much it sends accordingly.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 234,
+          "phrase": "flow-control service"
+        }
+      ]
+    },
+    {
+      "id": "p06",
+      "type": "paraphrase",
+      "question": "How does a LAN switch work out which device is reachable through which port when nobody configures it?",
+      "answer": "Switches are self-learning. The switch table starts empty, and for each frame that arrives the switch records the frame's source MAC address and the interface it arrived on.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 450,
+          "phrase": "switches are self-learning"
+        }
+      ]
+    },
+    {
+      "id": "p07",
+      "type": "paraphrase",
+      "question": "What steps does a laptop go through to obtain an IP address automatically when it joins a network?",
+      "answer": "DHCP uses four steps: the client sends a DHCP discover message, a server answers with a DHCP offer, the client replies with a DHCP request, and the server confirms with a DHCP ACK.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 321,
+          "phrase": "four-step process"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 322,
+          "phrase": "dhcp ack"
+        }
+      ]
+    },
+    {
+      "id": "p08",
+      "type": "paraphrase",
+      "question": "Why is reserving a dedicated path for every conversation considered an inefficient way to use a network?",
+      "answer": "Because the dedicated circuits sit idle during silent periods. For example, when one person in a phone call stops talking, the reserved resources cannot be used by other connections.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 48,
+          "phrase": "silent periods"
+        }
+      ]
+    },
+    {
+      "id": "m01",
+      "type": "multi_chunk",
+      "question": "How do Go-Back-N and Selective Repeat differ in how they acknowledge and retransmit packets?",
+      "answer": "Go-Back-N uses cumulative acknowledgments: an ACK for sequence number n means everything up to n arrived. Selective Repeat has the receiver acknowledge each correctly received packet individually, and the sender retransmits only the packets that were lost or corrupted.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 213,
+          "phrase": "cumulative acknowledgment"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 215,
+          "phrase": "individually acknowledge"
+        }
+      ]
+    },
+    {
+      "id": "m02",
+      "type": "multi_chunk",
+      "question": "How do link-state and distance-vector routing algorithms differ in the information a node needs and the messages they exchange?",
+      "answer": "Link-state is centralized: it computes least-cost paths with complete, global knowledge of the network, so every node must learn the cost of every link. Distance-vector is decentralized: nodes only exchange messages with their directly connected neighbours and compute paths iteratively.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 356,
+          "phrase": "centralized routing algorithm"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 367,
+          "phrase": "message complexity"
+        }
+      ]
+    },
+    {
+      "id": "m03",
+      "type": "multi_chunk",
+      "question": "What services does TCP give to an application compared with UDP?",
+      "answer": "TCP offers a connection-oriented service and reliable data transfer. UDP is a minimal, connectionless protocol: there is no handshaking and no guarantee that a message reaches the receiving process.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 105,
+          "phrase": "tcp service model"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 106,
+          "phrase": "no-frills"
+        }
+      ]
+    },
+    {
+      "id": "m04",
+      "type": "multi_chunk",
+      "question": "Which routing protocol is used inside an autonomous system and which one is used between autonomous systems in the Internet?",
+      "answer": "OSPF (Open Shortest Path First) is widely used for routing inside an autonomous system. BGP (Border Gateway Protocol) is the inter-AS protocol that all autonomous systems run.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 369,
+          "phrase": "open shortest path first"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 371,
+          "phrase": "border gateway protocol"
+        }
+      ]
+    },
+    {
+      "id": "m05",
+      "type": "multi_chunk",
+      "question": "Why does Ethernet use collision detection while Wi-Fi uses collision avoidance?",
+      "answer": "With CSMA/CD on Ethernet a node listens while it transmits and stops as soon as it detects a collision. On a wireless link the received signal is very weak compared with the station's own transmitted signal, so detecting a collision is difficult; Wi-Fi's CSMA/CA therefore does not use collision detection.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 432,
+          "phrase": "collision detection"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 514,
+          "phrase": "no collision detection"
+        }
+      ]
+    },
+    {
+      "id": "m06",
+      "type": "multi_chunk",
+      "question": "What does an intrusion detection system inspect that a packet-filtering firewall does not?",
+      "answer": "A packet filter decides using header fields such as IP, TCP, UDP and ICMP headers. An intrusion detection system performs deep packet inspection: it also looks into the application data carried by the packets.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 638,
+          "phrase": "traditional packet filters"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 644,
+          "phrase": "deep packet inspection"
+        }
+      ]
+    },
+    {
+      "id": "m07",
+      "type": "multi_chunk",
+      "question": "How do symmetric key systems and public key systems differ in the keys the two parties hold?",
+      "answer": "In symmetric key systems both parties hold the same secret key, so they must first agree on a shared secret. In public key systems a pair of keys is used: one is public and known to everyone, the other is known only to its owner.",
+      "answerable": true,
+      "evidence": [
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 584,
+          "phrase": "symmetric key systems"
+        },
+        {
+          "source": "base_docs_comnet.pdf",
+          "page": 590,
+          "phrase": "public key cryptography"
+        }
+      ]
+    },
+    {
+      "id": "u01",
+      "type": "unanswerable",
+      "question": "How does the leaky bucket mechanism police the rate of a traffic flow?",
+      "answer": "The document does not contain this information. A correct response says that it does not know.",
+      "answerable": false,
+      "evidence": [],
+      "absent_terms": [
+        "leaky bucket",
+        "token bucket"
+      ]
+    },
+    {
+      "id": "u02",
+      "type": "unanswerable",
+      "question": "How does BitTorrent's tit-for-tat mechanism decide which peers to upload to?",
+      "answer": "The document does not contain this information. A correct response says that it does not know.",
+      "answerable": false,
+      "evidence": [],
+      "absent_terms": [
+        "tit-for-tat",
+        "rarest first"
+      ]
+    },
+    {
+      "id": "u03",
+      "type": "unanswerable",
+      "question": "Which port does POP3 use, and how does its download-and-delete mode work?",
+      "answer": "The document does not contain this information. A correct response says that it does not know.",
+      "answerable": false,
+      "evidence": [],
+      "absent_terms": [
+        "pop3",
+        "post office protocol",
+        "port 110"
+      ]
+    },
+    {
+      "id": "u04",
+      "type": "unanswerable",
+      "question": "How does a Hamming code correct a single-bit error?",
+      "answer": "The document does not contain this information. A correct response says that it does not know.",
+      "answerable": false,
+      "evidence": [],
+      "absent_terms": [
+        "hamming"
+      ]
+    },
+    {
+      "id": "u05",
+      "type": "unanswerable",
+      "question": "How does the WebSocket handshake upgrade an HTTP connection?",
+      "answer": "The document does not contain this information. A correct response says that it does not know.",
+      "answerable": false,
+      "evidence": [],
+      "absent_terms": [
+        "websocket"
+      ]
+    },
+    {
+      "id": "u06",
+      "type": "unanswerable",
+      "question": "How does the Network Time Protocol (NTP) synchronise clocks between hosts?",
+      "answer": "The document does not contain this information. A correct response says that it does not know.",
+      "answerable": false,
+      "evidence": [],
+      "absent_terms": [
+        "network time protocol",
+        "ntp"
+      ]
+    }
+  ]
+}

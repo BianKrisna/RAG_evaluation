@@ -18,6 +18,7 @@ def compare_architectures(chains, dataset_name, settings=None, client=None):
             chain, dataset_name, experiment_prefix=f"{name}-{comparison_id}",
             client=client, max_concurrency=1, data=examples,
             metadata={"architecture": name, "comparison_id": comparison_id,
+                      "dataset_name": dataset_name,
                       "dataset_snapshot": snapshot_time.isoformat(),
                       "settings": (settings or {}).get(name, {})},
         )
