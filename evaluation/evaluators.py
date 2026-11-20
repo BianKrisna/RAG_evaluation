@@ -9,8 +9,12 @@ Scoring: 0-3 scale (normalized to 0.0-1.0 for LangSmith)
     2 = mostly correct / relevant with minor issues
     3 = fully correct / highly relevant / well-grounded
 
-Judge LLM: llama-3.1-8b-instant via Groq (free tier).
-Override model with JUDGE_MODEL env var. Uses GROQ_API_KEY.
+Judge LLM: Groq model from the JUDGE_MODEL env var (default below in _judge).
+Uses GROQ_API_KEY.
+
+Failures: if the judge call errors or no "Score: N" can be parsed, the score is
+None (not 0), so LangSmith leaves that row out of the average instead of
+counting it as a bad answer. The reason is kept in the comment.
 
 Metrics:
     correctness         -- does answer match the reference? (needs ground truth)
@@ -22,6 +26,7 @@ Metrics:
 from __future__ import annotations
 
 import os
+import re
 from functools import lru_cache
 
 from langchain_groq import ChatGroq
@@ -43,9 +48,22 @@ def _judge():
     return ChatGroq(
         api_key=convert_to_secret_str(groq_key),
         model=model,
-        temperature=0.1,
-        max_tokens=128,   # short — only needs "Score: N\nReason: ..."
+        temperature=0,    # same input -> same grade, as far as the API allows
+        max_tokens=1024,  # room for a <think> block before "Score: N"
     )
+
+
+_THINK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+_SCORE = re.compile(r"score\s*[:=]\s*\**\s*([0-3])\b", re.IGNORECASE)
+
+
+def parse_score(text: str) -> int | None:
+    """Return the 0-3 score from the judge reply, or None if there is none."""
+    text = _THINK.sub("", text)
+    if "<think>" in text.lower():   # thinking was cut off: no real answer
+        return None
+    matches = _SCORE.findall(text)
+    return int(matches[-1]) if matches else None
 
 
 # ---------------------------------------------------------------------------
@@ -61,7 +79,7 @@ def _make_evaluator(key: str, prompt: str):
         Reason: <one sentence>
 
     score normalised to 0.0-1.0 (divided by 3) for LangSmith.
-    Falls back to 0 on parse failure — never raises.
+    On judge error or parse failure the score is None — never raises.
     """
     _prompt = ChatPromptTemplate.from_template(prompt)
 
@@ -75,23 +93,16 @@ def _make_evaluator(key: str, prompt: str):
                 "context":   (run.outputs or {}).get("context", ""),
             }).strip()
         except Exception as e:
-            return {"key": key, "score": 0.0, "comment": f"Judge error: {e}"}
+            return {"key": key, "score": None, "comment": f"JUDGE_ERROR: {e}"}
 
-        # Parse "Score: N" line — robust against preamble/postamble
-        score_raw = 0
-        for line in result.splitlines():
-            if line.lower().startswith("score:"):
-                try:
-                    score_raw = int(line.split(":", 1)[1].strip()[0])
-                    score_raw = max(0, min(3, score_raw))
-                except (ValueError, IndexError):
-                    score_raw = 0
-                break
+        score_raw = parse_score(result)
+        if score_raw is None:
+            return {"key": key, "score": None, "comment": f"JUDGE_PARSE_ERROR: {result[-500:]}"}
 
         return {
             "key":     key,
             "score":   round(score_raw / 3, 4),
-            "comment": result,
+            "comment": _THINK.sub("", result).strip(),
         }
 
     evaluator.__name__ = key
