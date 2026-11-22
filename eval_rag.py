@@ -46,21 +46,29 @@ def main(argv=None):
     for name, result in results.items():
         experiment = client.read_project(project_name=result.experiment_name)
         print(f"{name}: {experiment.url}")
-        print_judge_failures(name, result)
+        print_failures(name, result)
 
 
-def print_judge_failures(name, result):
-    """Count scores that are None (judge error or unparseable reply), per metric."""
+def print_failures(name, result):
+    """Report crashed runs and judge failures separately."""
     from collections import Counter
     failed, total = Counter(), Counter()
+    runs = crashed = 0
     for row in result:
+        runs += 1
+        if row["run"].error:
+            crashed += 1
+            continue
         for res in row["evaluation_results"]["results"]:
             total[res.key] += 1
             if res.score is None:
                 failed[res.key] += 1
+    print(f"  RAG chain: {crashed}/{runs} runs crashed")
     for key in sorted(total):
         flag = "  <-- check the judge" if failed[key] > 0.1 * total[key] else ""
         print(f"  {key}: {failed[key]}/{total[key]} judge failures{flag}")
+    if crashed or any(failed.values()):
+        print(f"  INCOMPLETE: do not compare {name}'s averages with other architectures")
 
 
 if __name__ == "__main__":
