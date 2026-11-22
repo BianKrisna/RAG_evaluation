@@ -13,9 +13,35 @@ Usage:
 """
 
 from __future__ import annotations
+from time import sleep
 from typing import Any, Callable
 
+import httpx
 from langsmith import evaluate, Client
+
+RETRY_WAITS = (2, 8)  # seconds to wait before the 2nd and 3rd attempt
+RETRY_STATUS = {408, 429, 500, 502, 503, 504}
+
+
+def _is_temporary(error: Exception) -> bool:
+    """True for errors that may work on a second try."""
+    if isinstance(error, (TimeoutError, ConnectionError, httpx.TransportError)):
+        return True
+    response = getattr(error, "response", None)
+    return getattr(response, "status_code", None) in RETRY_STATUS
+
+
+def _invoke_with_retry(rag_chain, payload: dict):
+    """Call the chain, retrying temporary errors. Other errors fail immediately."""
+    for wait in RETRY_WAITS:
+        try:
+            return rag_chain.invoke(payload)
+        except Exception as error:
+            if not _is_temporary(error):
+                raise
+            print(f"[retry] {type(error).__name__}, trying again in {wait}s")
+            sleep(wait)
+    return rag_chain.invoke(payload)
 
 
 def _make_target(rag_chain) -> Callable:
@@ -36,7 +62,7 @@ def _make_target(rag_chain) -> Callable:
 
     def target(inputs: dict) -> dict:
         question = inputs["question"]
-        raw = rag_chain.invoke({"input": question})
+        raw = _invoke_with_retry(rag_chain, {"input": question})
 
         # Handle dict output (create_retrieval_chain style)
         if isinstance(raw, dict):

@@ -15,6 +15,7 @@ Uses GROQ_API_KEY.
 Failures: if the judge call errors or no "Score: N" can be parsed, the score is
 None (not 0), so LangSmith leaves that row out of the average instead of
 counting it as a bad answer. The reason is kept in the comment.
+If the RAG chain itself crashed, the judge is not called and the score is None.
 
 Metrics:
     correctness         -- does answer match the reference? (needs ground truth)
@@ -84,6 +85,9 @@ def _make_evaluator(key: str, prompt: str):
     _prompt = ChatPromptTemplate.from_template(prompt)
 
     def evaluator(run, example):
+        if getattr(run, "error", None):
+            return {"key": key, "score": None, "comment": f"TARGET_ERROR: {run.error[:300]}"}
+
         try:
             chain = _prompt | _judge() | StrOutputParser()
             result = chain.invoke({
