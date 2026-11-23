@@ -10,7 +10,8 @@ The data lives in benchmark.json (next to this file). Each example has:
     evidence    where the answer lives: [{"source", "page", "phrase"}]
                 page is the 0-based page index, the same number PyMuPDFLoader
                 puts in doc.metadata["page"]; phrase is a short anchor that
-                appears on that page
+                appears on that page; optional "also" lists other pages that
+                answer the question just as well (the phrase must be on them too)
     absent_terms  (unanswerable only) terms that must NOT appear in the corpus
 
 Check the benchmark against the real PDF (no API keys needed):
@@ -84,9 +85,13 @@ def validate_benchmark(benchmark: dict) -> list[str]:
         for ev in evidence:
             if not ev.get("source") or not (ev.get("phrase") or "").strip():
                 problems.append(f"{tag}: evidence needs 'source' and 'phrase'")
-            page = ev.get("page")
-            if not isinstance(page, int) or page < 0 or (total_pages and page >= total_pages):
-                problems.append(f"{tag}: evidence page {page!r} is out of range")
+            also = ev.get("also", [])
+            if not isinstance(also, list) or ev.get("page") in also or len(set(also)) != len(also):
+                problems.append(f"{tag}: 'also' must be a list of other pages, without repeats")
+                also = []
+            for page in [ev.get("page"), *also]:
+                if not isinstance(page, int) or page < 0 or (total_pages and page >= total_pages):
+                    problems.append(f"{tag}: evidence page {page!r} is out of range")
     return problems
 
 
@@ -139,10 +144,11 @@ def verify_corpus(benchmark: dict, corpus_dir="./src") -> list[str]:
             doc = pages(ev["source"])
             if doc is None:
                 continue
-            if ev["page"] >= len(doc):
-                problems.append(f"{ex['id']}: page {ev['page']} does not exist in {ev['source']}")
-            elif normalize_text(ev["phrase"]) not in doc[ev["page"]]:
-                problems.append(f"{ex['id']}: phrase {ev['phrase']!r} not found on page {ev['page']}")
+            for page in [ev["page"], *ev.get("also", [])]:
+                if page >= len(doc):
+                    problems.append(f"{ex['id']}: page {page} does not exist in {ev['source']}")
+                elif normalize_text(ev["phrase"]) not in doc[page]:
+                    problems.append(f"{ex['id']}: phrase {ev['phrase']!r} not found on page {page}")
         for term in ex.get("absent_terms") or []:
             pattern = re.compile(r"\b" + re.escape(normalize_text(term)) + r"\b")
             for doc in pages_by_source.values():

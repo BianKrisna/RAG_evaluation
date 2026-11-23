@@ -122,6 +122,7 @@
         {
           "source": "base_docs_comnet.pdf",
           "page": 228,
+          "also": [251],
           "phrase": "three duplicate acks"
         }
       ]
@@ -290,6 +291,7 @@
         {
           "source": "base_docs_comnet.pdf",
           "page": 253,
+          "also": [250],
           "phrase": "rfc 5681"
         }
       ]
@@ -360,6 +362,7 @@
         {
           "source": "base_docs_comnet.pdf",
           "page": 514,
+          "also": [516],
           "phrase": "hidden terminal problem"
         }
       ]
@@ -577,6 +580,7 @@
         {
           "source": "base_docs_comnet.pdf",
           "page": 644,
+          "also": [326],
           "phrase": "deep packet inspection"
         }
       ]
