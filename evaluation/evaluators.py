@@ -55,7 +55,7 @@ def _judge():
 
 
 _THINK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
-_SCORE = re.compile(r"score\s*[:=]\s*\**\s*([0-3])\b", re.IGNORECASE)
+_SCORE = re.compile(r"^[ \t*_]*score[ \t*_]*[:=][ \t*_]*([0-3])\b(?!\.\d|[ \t]*/)", re.I | re.M)
 
 
 def parse_score(text: str) -> int | None:
@@ -63,8 +63,8 @@ def parse_score(text: str) -> int | None:
     text = _THINK.sub("", text)
     if "<think>" in text.lower():   # thinking was cut off: no real answer
         return None
-    matches = _SCORE.findall(text)
-    return int(matches[-1]) if matches else None
+    match = _SCORE.search(text)   # first "Score:" line; later ones are in the reason
+    return int(match.group(1)) if match else None
 
 
 # ---------------------------------------------------------------------------
