@@ -22,6 +22,7 @@ Metrics:
     relevance           -- does answer actually address the question?
     groundedness        -- are all claims backed by retrieved context?
     retrieval_relevance -- are retrieved chunks on-topic for the question?
+    evidence_recall     -- did retrieval find the labeled evidence pages? (no LLM)
 """
 
 from __future__ import annotations
@@ -221,6 +222,38 @@ Reason: <one sentence>
 
 
 # ---------------------------------------------------------------------------
+# Metric 5 — Evidence recall (no LLM)
+# "Did the retriever find the pages that hold the answer?"
+# Needs: example.outputs["evidence"] and run.outputs["pages"]
+# ---------------------------------------------------------------------------
+
+
+def evidence_recall_evaluator(run, example):
+    """Share of evidence items found in the retrieved chunks (0.0-1.0).
+
+    An evidence item counts as found if any retrieved chunk comes from its
+    page or one of its "also" pages. Unanswerable questions have no evidence,
+    so their score is None with a NOT_APPLICABLE comment.
+    """
+    key = "evidence_recall"
+    if getattr(run, "error", None):
+        return {"key": key, "score": None, "comment": f"TARGET_ERROR: {run.error[:300]}"}
+    evidence = (example.outputs or {}).get("evidence") or []
+    if not evidence:
+        return {"key": key, "score": None, "comment": f"{NOT_APPLICABLE}: no evidence"}
+
+    retrieved = {(p["source"], p["page"]) for p in (run.outputs or {}).get("pages", [])}
+    missed = []
+    for ev in evidence:
+        wanted = {(ev["source"], page) for page in [ev["page"], *ev.get("also", [])]}
+        if not retrieved & wanted:
+            missed.append(f"{ev['source']} page {ev['page']} ({ev['phrase']!r})")
+    found = len(evidence) - len(missed)
+    comment = f"found {found}/{len(evidence)}" + (f"; missed {', '.join(missed)}" if missed else "")
+    return {"key": key, "score": round(found / len(evidence), 4), "comment": comment}
+
+
+# ---------------------------------------------------------------------------
 # Bundle
 # ---------------------------------------------------------------------------
 
@@ -229,4 +262,5 @@ ALL_EVALUATORS = [
     relevance_evaluator,
     groundedness_evaluator,
     retrieval_relevance_evaluator,
+    evidence_recall_evaluator,
 ]

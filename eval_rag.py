@@ -62,7 +62,7 @@ def print_failures(name, result):
             continue
         for res in row["evaluation_results"]["results"]:
             if (res.comment or "").startswith(NOT_APPLICABLE):
-                continue   # e.g. relevance on an unanswerable question: nothing to measure
+                continue   # e.g. recall or relevance on an unanswerable question: nothing to measure
             total[res.key] += 1
             if res.score is None:
                 failed[res.key] += 1

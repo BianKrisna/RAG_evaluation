@@ -13,6 +13,7 @@ Usage:
 """
 
 from __future__ import annotations
+from pathlib import Path
 from time import sleep
 from typing import Any, Callable
 
@@ -58,6 +59,8 @@ def _make_target(rag_chain) -> Callable:
                           retrieval_relevance metrics). If your chain doesn't
                           expose context, pass context_key=None and those two
                           metrics will receive an empty string.
+        "pages"   (list)  — [{"source", "page"}] of each retrieved chunk, for the
+                          evidence_recall metric (empty for plain-string chains).
     """
 
     def target(inputs: dict) -> dict:
@@ -76,14 +79,26 @@ def _make_target(rag_chain) -> Callable:
                 )
             else:
                 context = str(source_docs)
+            pages = _retrieved_pages(source_docs)
         # Handle plain-string output (LCEL pipe chains)
         else:
             answer = str(raw)
             context = ""
+            pages = []
 
-        return {"answer": answer, "context": context}
+        return {"answer": answer, "context": context, "pages": pages}
 
     return target
+
+
+def _retrieved_pages(docs) -> list[dict]:
+    """Where each retrieved chunk came from: [{"source": file name, "page": n}]."""
+    pages = []
+    for doc in docs if isinstance(docs, list) else []:
+        meta = getattr(doc, "metadata", None) or {}
+        if "page" in meta:
+            pages.append({"source": Path(str(meta.get("source", ""))).name, "page": meta["page"]})
+    return pages
 
 
 def evaluate_rag(
