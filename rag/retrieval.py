@@ -1,4 +1,5 @@
 """Question-to-documents building blocks."""
+import re
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.documents import Document
@@ -56,8 +57,13 @@ def dense_retrieval(vectorstore, **search_kwargs):
     return vectorstore.as_retriever(**({"search_kwargs": search_kwargs} if search_kwargs else {}))
 
 
+def bm25_tokenize(text: str) -> List[str]:
+    """Lowercase words without punctuation, so "TCP?" and "tcp" match."""
+    return re.findall(r"\w+", text.lower())
+
+
 def sparse_retrieval(documents, k=4):
-    retriever = BM25Retriever.from_documents(documents)
+    retriever = BM25Retriever.from_documents(documents, preprocess_func=bm25_tokenize)
     retriever.k = k
     return retriever
 
