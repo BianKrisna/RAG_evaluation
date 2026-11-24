@@ -53,6 +53,8 @@ def _judge():
         max_tokens=1024,  # room for a <think> block before "Score: N"
     )
 
+# Comment prefix for "this metric does not apply here"; print_failures skips these.
+NOT_APPLICABLE = "NOT_APPLICABLE"
 
 _THINK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
 _SCORE = re.compile(r"^[ \t*_]*score[ \t*_]*[:=][ \t*_]*([0-3])\b(?!\.\d|[ \t]*/)", re.I | re.M)
@@ -71,7 +73,7 @@ def parse_score(text: str) -> int | None:
 # Core factory
 # ---------------------------------------------------------------------------
 
-def _make_evaluator(key: str, prompt: str):
+def _make_evaluator(key: str, prompt: str, skip_unanswerable: bool = False):
     """
     Build a LangSmith-compatible evaluator from a prompt template.
 
@@ -81,12 +83,16 @@ def _make_evaluator(key: str, prompt: str):
 
     score normalised to 0.0-1.0 (divided by 3) for LangSmith.
     On judge error or parse failure the score is None — never raises.
+    skip_unanswerable: give None + NOT_APPLICABLE on unanswerable questions,
+    for metrics where the correct answer ("I don't know") would score badly.
     """
     _prompt = ChatPromptTemplate.from_template(prompt)
 
     def evaluator(run, example):
         if getattr(run, "error", None):
             return {"key": key, "score": None, "comment": f"TARGET_ERROR: {run.error[:300]}"}
+        if skip_unanswerable and (example.outputs or {}).get("answerable") is False:
+            return {"key": key, "score": None, "comment": f"{NOT_APPLICABLE}: unanswerable question"}
 
         try:
             chain = _prompt | _judge() | StrOutputParser()
@@ -159,7 +165,7 @@ Scoring scale:
 Output exactly:
 Score: <0|1|2|3>
 Reason: <one sentence>
-""")
+""", skip_unanswerable=True)
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +217,7 @@ Scoring scale:
 Output exactly:
 Score: <0|1|2|3>
 Reason: <one sentence>
-""")
+""", skip_unanswerable=True)
 
 
 # ---------------------------------------------------------------------------

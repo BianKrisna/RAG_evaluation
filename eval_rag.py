@@ -52,6 +52,7 @@ def main(argv=None):
 def print_failures(name, result):
     """Report crashed runs and judge failures separately."""
     from collections import Counter
+    from evaluation.evaluators import NOT_APPLICABLE
     failed, total = Counter(), Counter()
     runs = crashed = 0
     for row in result:
@@ -60,6 +61,8 @@ def print_failures(name, result):
             crashed += 1
             continue
         for res in row["evaluation_results"]["results"]:
+            if (res.comment or "").startswith(NOT_APPLICABLE):
+                continue   # e.g. relevance on an unanswerable question: nothing to measure
             total[res.key] += 1
             if res.score is None:
                 failed[res.key] += 1
